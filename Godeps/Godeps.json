@@ -1,0 +1,12 @@
+{
+	"ImportPath": "github.com/kubesure/policy",
+	"GoVersion": "go1.12",
+	"GodepVersion": "v80",
+	"Deps": [
+		{
+			"ImportPath": "github.com/go-sql-driver/mysql",
+			"Comment": "v1.4.0-21-gc0f6b44",
+			"Rev": "c0f6b444ad8f92ecd68f86b27635c1fccdede4c4"
+		}
+	]
+}

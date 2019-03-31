@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: policy
+    role: business
+    type: backend
+  name: policy
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: policy
+      role: business
+      type: backend
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: policy
+        role: business
+        type: backend
+    spec:
+      containers:
+      - image: policy:v1
+        name: policy
+        ports:
+        - containerPort: 8000
