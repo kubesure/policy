@@ -14,7 +14,7 @@ import (
 var mysqlsvc = os.Getenv("mysqlpolicysvc")
 
 //Policy is the API output
-type Policy struct {
+type policy struct {
 	PolicyNumber int64
 }
 
@@ -41,7 +41,7 @@ func createPolicy(w http.ResponseWriter, req *http.Request) {
 			log.Println(err)
 			w.WriteHeader(http.StatusServiceUnavailable)
 		} else {
-			data, _ := json.Marshal(Policy{PolicyNumber: *pnumber})
+			data, _ := json.Marshal(policy{PolicyNumber: *pnumber})
 			fmt.Fprintf(w, "%s", data)
 		}
 	}
@@ -75,7 +75,6 @@ func marshalPolicy(data string) (*request, error) {
 	var r request
 	err := json.Unmarshal([]byte(data), &r)
 	if err != nil {
-		log.Println("there was an error in marshalling request", err.Error())
 		return nil, err
 	}
 	return &r, nil
