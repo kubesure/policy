@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"encoding/json"
 	"fmt"
@@ -9,6 +10,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"os/signal"
 )
 
 var mysqlsvc = os.Getenv("mysqlpolicysvc")
@@ -26,7 +28,23 @@ func main() {
 	log.Println("server policy starting...")
 	mux := http.NewServeMux()
 	mux.HandleFunc("/api/v1/health/poicies", createPolicy)
-	log.Fatal(http.ListenAndServe(":8000", mux))
+	srv := http.Server{Addr: ":8080", Handler: mux}
+	ctx := context.Background()
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt)
+
+	go func() {
+		for range c {
+			log.Print("shutting down policy server...")
+			srv.Shutdown(ctx)
+			<-ctx.Done()
+		}
+	}()
+
+	if err := srv.ListenAndServe(); err != http.ErrServerClosed {
+		log.Fatalf("ListenAndServe(): %s", err)
+	}
+	//log.Fatal(http.ListenAndServe(":8000", mux))
 }
 
 func createPolicy(w http.ResponseWriter, req *http.Request) {
