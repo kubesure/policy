@@ -28,7 +28,7 @@ func main() {
 	log.Println("server policy starting...")
 	mux := http.NewServeMux()
 	mux.HandleFunc("/api/v1/health/poicies", createPolicy)
-	srv := http.Server{Addr: ":8080", Handler: mux}
+	srv := http.Server{Addr: ":8000", Handler: mux}
 	ctx := context.Background()
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
