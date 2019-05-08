@@ -10,3 +10,11 @@ CREATE TABLE `policy` (
   `updated_date`  timestamp DEFAULT now(),
   PRIMARY KEY (`id`)
 );
+
+curl -X POST \
+  http://localhost:8000/api/v1/health/poicies \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "QuoteNumber": "12343456",
+    "ReceiptNumber": "1234345678"
+}'
