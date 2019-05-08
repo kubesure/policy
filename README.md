@@ -1,5 +1,6 @@
 # policy
 
+CREATE SCHEMA `policy`;
 DROP TABLE policy;
 
 CREATE TABLE `policy` (

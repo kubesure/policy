@@ -44,7 +44,6 @@ func main() {
 	if err := srv.ListenAndServe(); err != http.ErrServerClosed {
 		log.Fatalf("ListenAndServe(): %s", err)
 	}
-	//log.Fatal(http.ListenAndServe(":8000", mux))
 }
 
 func validateReq(w http.ResponseWriter, req *http.Request) error {
@@ -86,7 +85,7 @@ func createPolicy(w http.ResponseWriter, req *http.Request) {
 }
 
 func save(r *request) (*int64, error) {
-	db, _ := sql.Open("mysql", "root:@tcp("+mysqlsvc+":3306)/test")
+	db, _ := sql.Open("mysql", "root:admin@tcp("+mysqlsvc+":3306)/policy")
 	defer db.Close()
 
 	err := db.Ping()
