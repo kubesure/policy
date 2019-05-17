@@ -5,12 +5,13 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	_ "github.com/go-sql-driver/mysql"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"os"
 	"os/signal"
+
+	_ "github.com/go-sql-driver/mysql"
+	log "github.com/sirupsen/logrus"
 )
 
 var mysqlsvc = os.Getenv("mysqlpolicysvc")
@@ -25,7 +26,7 @@ type request struct {
 }
 
 func main() {
-	log.Println("server policy starting...")
+	log.Debug("server policy starting...")
 	mux := http.NewServeMux()
 	mux.HandleFunc("/api/v1/health/poicies", createPolicy)
 	srv := http.Server{Addr: ":8000", Handler: mux}
@@ -35,7 +36,7 @@ func main() {
 
 	go func() {
 		for range c {
-			log.Print("shutting down policy server...")
+			log.Debug("shutting down policy server...")
 			srv.Shutdown(ctx)
 			<-ctx.Done()
 		}
@@ -48,13 +49,13 @@ func main() {
 
 func validateReq(w http.ResponseWriter, req *http.Request) error {
 	if req.Method != http.MethodPost {
-		log.Println("invalid method ", req.Method)
+		log.Debug("invalid method ", req.Method)
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		return fmt.Errorf("Invalid method %s", req.Method)
 	}
 
 	if req.Header.Get("Content-Type") != "application/json" {
-		log.Println("invalid content type ", req.Header.Get("Content-Type"))
+		log.Debug("invalid content type ", req.Header.Get("Content-Type"))
 		w.WriteHeader(http.StatusBadRequest)
 		return fmt.Errorf("Invalid content-type require %s", "application/json")
 	}
@@ -70,12 +71,12 @@ func createPolicy(w http.ResponseWriter, req *http.Request) {
 	body, _ := ioutil.ReadAll(req.Body)
 	r, err := marshalPolicy(string(body))
 	if err != nil {
-		log.Println(err)
+		log.Error(err)
 		w.WriteHeader(http.StatusServiceUnavailable)
 	} else {
 		pnumber, err := save(r)
 		if err != nil {
-			log.Println(err)
+			log.Error(err)
 			w.WriteHeader(http.StatusServiceUnavailable)
 		} else {
 			data, _ := json.Marshal(policy{PolicyNumber: *pnumber})

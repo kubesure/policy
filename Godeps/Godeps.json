@@ -7,6 +7,20 @@
 			"ImportPath": "github.com/go-sql-driver/mysql",
 			"Comment": "v1.4.0-21-gc0f6b44",
 			"Rev": "c0f6b444ad8f92ecd68f86b27635c1fccdede4c4"
+		},
+		{
+			"ImportPath": "github.com/konsorten/go-windows-terminal-sequences",
+			"Comment": "v1.0.2",
+			"Rev": "f55edac94c9bbba5d6182a4be46d86a2c9b5b50e"
+		},
+		{
+			"ImportPath": "github.com/sirupsen/logrus",
+			"Comment": "v1.4.1-2-g9b3cdde",
+			"Rev": "9b3cdde74fbe9443d704467498a7dcb61a79de9b"
+		},
+		{
+			"ImportPath": "golang.org/x/sys/unix",
+			"Rev": "9eb1bfa1ce65ae8a6ff3114b0aaf9a41a6cf3560"
 		}
 	]
 }
