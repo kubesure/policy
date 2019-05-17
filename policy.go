@@ -16,6 +16,13 @@ import (
 
 var mysqlsvc = os.Getenv("mysqlpolicysvc")
 
+func init() {
+	log.SetFormatter(&log.JSONFormatter{})
+	log.SetLevel(log.DebugLevel)
+	log.SetOutput(os.Stdout)
+	log.SetReportCaller(true)
+}
+
 //Policy is the API output
 type policy struct {
 	PolicyNumber int64
