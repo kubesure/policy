@@ -26,3 +26,6 @@ spec:
         name: policy
         ports:
         - containerPort: 8000
+        env: 
+        - name: mysqlpolicysvc
+          value: mysql-0.mysql
