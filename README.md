@@ -4,6 +4,7 @@
 
    ```
       CREATE SCHEMA `policy`;
+      USE POLICY;
       DROP TABLE policy;
       CREATE TABLE `policy` (
          `id` int(11) NOT NULL AUTO_INCREMENT,
@@ -19,12 +20,8 @@
 ```
  go run policy.go   
 ```
-
- curl -X POST                                 \
-  http://localhost:8000/api/v1/health/poicies \
-  -H 'Content-Type: application/json' \
-  -d '{                               \ 
-    "QuoteNumber": "12343456",        \ 
-    "ReceiptNumber": "1234345678"     \
-} \'
+curl -X POST http://172.17.0.13:8000/api/v1/health/poicies -H 'Content-Type: application/json' -d '{
+    "QuoteNumber": "12343456",        
+    "ReceiptNumber": "1234345678"     
+} '
 ```
