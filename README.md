@@ -4,7 +4,7 @@
 
    ```
       CREATE SCHEMA `policy`;
-      USE POLICY;
+      USE policy;
       DROP TABLE policy;
       CREATE TABLE `policy` (
          `id` int(11) NOT NULL AUTO_INCREMENT,
