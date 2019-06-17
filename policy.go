@@ -32,6 +32,26 @@ type request struct {
 	QuoteNumber, ReceiptNumber string
 }
 
+type eventpolicyissued struct {
+	PolicyNumber               int64
+	QuoteNumber, ReceiptNumber string
+}
+
+type erroresponse struct {
+	Code    int    `json:"errorCode"`
+	Message string `json:"errorMessage"`
+}
+
+//Error Code Enum
+const (
+	SystemErr = iota
+	InputJSONInvalid
+	AgeRangeInvalid
+	RiskDetailsInvalid
+	InvalidRestMethod
+	InvalidContentType
+)
+
 func main() {
 	log.Debug("server policy starting...")
 	mux := http.NewServeMux()
@@ -54,32 +74,34 @@ func main() {
 	}
 }
 
-func validateReq(w http.ResponseWriter, req *http.Request) error {
+func validateReq(w http.ResponseWriter, req *http.Request) (*request, *erroresponse) {
 	if req.Method != http.MethodPost {
 		log.Debug("invalid method ", req.Method)
-		w.WriteHeader(http.StatusMethodNotAllowed)
-		return fmt.Errorf("Invalid method %s", req.Method)
+		return nil, &erroresponse{Code: InvalidRestMethod, Message: fmt.Sprintf("Invalid method %s", req.Method)}
 	}
 
 	if req.Header.Get("Content-Type") != "application/json" {
 		log.Debug("invalid content type ", req.Header.Get("Content-Type"))
-		w.WriteHeader(http.StatusBadRequest)
-		return fmt.Errorf("Invalid content-type require %s", "application/json")
-	}
-	return nil
-}
-
-func createPolicy(w http.ResponseWriter, req *http.Request) {
-
-	if err := validateReq(w, req); err != nil {
-		return
+		msg := fmt.Sprintf("Invalid content-type %s require %s", req.Header.Get("Content-Type"), "application/json")
+		return nil, &erroresponse{Code: InvalidContentType, Message: msg}
 	}
 
 	body, _ := ioutil.ReadAll(req.Body)
 	r, err := marshalPolicy(string(body))
+
 	if err != nil {
-		log.Error(err)
-		w.WriteHeader(http.StatusServiceUnavailable)
+		return nil, err
+	}
+
+	return r, nil
+}
+
+func createPolicy(w http.ResponseWriter, req *http.Request) {
+	r, err := validateReq(w, req)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		data, _ := json.Marshal(err)
+		fmt.Fprintf(w, "%s", data)
 	} else {
 		pnumber, err := save(r)
 		if err != nil {
@@ -116,11 +138,16 @@ func save(r *request) (*int64, error) {
 	return &polid, nil
 }
 
-func marshalPolicy(data string) (*request, error) {
+func marshalPolicy(data string) (*request, *erroresponse) {
 	var r request
 	err := json.Unmarshal([]byte(data), &r)
 	if err != nil {
-		return nil, err
+		return nil, &erroresponse{Code: SystemErr, Message: "input invalid"}
 	}
+
+	if len(r.QuoteNumber) == 0 || len(r.ReceiptNumber) == 0 {
+		return nil, &erroresponse{Code: InputJSONInvalid, Message: "Invalid Input"}
+	}
+
 	return &r, nil
 }
