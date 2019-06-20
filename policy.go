@@ -10,11 +10,15 @@ import (
 	"os"
 	"os/signal"
 
+	"google.golang.org/grpc"
+
 	_ "github.com/go-sql-driver/mysql"
+	api "github.com/kubesure/policy/api/v1"
 	log "github.com/sirupsen/logrus"
 )
 
 var mysqlsvc = os.Getenv("mysqlpolicysvc")
+var publishersvc = os.Getenv("publishersvc")
 
 func init() {
 	log.SetFormatter(&log.JSONFormatter{})
@@ -135,6 +139,25 @@ func save(r *request) (*int64, error) {
 	}
 
 	polid, _ := rs.LastInsertId()
+
+	conn, err := grpc.Dial(publishersvc+":50051", grpc.WithInsecure())
+	if err != nil {
+		return nil, err
+	}
+	defer conn.Close()
+	pclient := api.NewPublisherClient(conn)
+
+	msg := api.Message{
+		Destination: "policyissued",
+		Payload:     `{"policyNumber": 121211, "receiptNumber": 1212121 , "quoteNumber": 111111}`,
+		Version:     "v1",
+		Type:        "t",
+	}
+	ack, perr := pclient.Publish(context.Background(), &msg)
+	if perr != nil {
+		return nil, perr
+	}
+	log.Info(ack.GetOk())
 	return &polid, nil
 }
 
