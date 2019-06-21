@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"database/sql"
 	"encoding/json"
@@ -37,8 +38,9 @@ type request struct {
 }
 
 type eventpolicyissued struct {
-	PolicyNumber               int64
-	QuoteNumber, ReceiptNumber string
+	PolicyNumber  int64  `json:"policyNumber"`
+	QuoteNumber   string `json:"quoteNumber"`
+	ReceiptNumber string `json:"receiptNumber"`
 }
 
 type erroresponse struct {
@@ -147,11 +149,18 @@ func save(r *request) (*int64, error) {
 	defer conn.Close()
 	pclient := api.NewPublisherClient(conn)
 
+	pevent := eventpolicyissued{PolicyNumber: polid, QuoteNumber: r.QuoteNumber, ReceiptNumber: r.ReceiptNumber}
+	var buff bytes.Buffer
+	errencode := json.NewEncoder(&buff).Encode(pevent)
+	if errencode != nil {
+		return nil, errencode
+	}
+	log.Info("---", buff.String())
 	msg := api.Message{
 		Destination: "policyissued",
-		Payload:     `{"policyNumber": 121211, "receiptNumber": 1212121 , "quoteNumber": 111111}`,
+		Payload:     buff.String(),
 		Version:     "v1",
-		Type:        "t",
+		Type:        "policy",
 	}
 	ack, perr := pclient.Publish(context.Background(), &msg)
 	if perr != nil {
