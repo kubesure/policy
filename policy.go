@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"database/sql"
 	"encoding/json"
@@ -10,11 +11,15 @@ import (
 	"os"
 	"os/signal"
 
+	"google.golang.org/grpc"
+
 	_ "github.com/go-sql-driver/mysql"
+	api "github.com/kubesure/policy/api/v1"
 	log "github.com/sirupsen/logrus"
 )
 
 var mysqlsvc = os.Getenv("mysqlpolicysvc")
+var publishersvc = os.Getenv("publishersvc")
 
 func init() {
 	log.SetFormatter(&log.JSONFormatter{})
@@ -33,8 +38,9 @@ type request struct {
 }
 
 type eventpolicyissued struct {
-	PolicyNumber               int64
-	QuoteNumber, ReceiptNumber string
+	PolicyNumber  int64  `json:"policyNumber"`
+	QuoteNumber   string `json:"quoteNumber"`
+	ReceiptNumber string `json:"receiptNumber"`
 }
 
 type erroresponse struct {
@@ -135,6 +141,32 @@ func save(r *request) (*int64, error) {
 	}
 
 	polid, _ := rs.LastInsertId()
+
+	conn, err := grpc.Dial(publishersvc+":50051", grpc.WithInsecure())
+	if err != nil {
+		return nil, err
+	}
+	defer conn.Close()
+	pclient := api.NewPublisherClient(conn)
+
+	pevent := eventpolicyissued{PolicyNumber: polid, QuoteNumber: r.QuoteNumber, ReceiptNumber: r.ReceiptNumber}
+	var buff bytes.Buffer
+	errencode := json.NewEncoder(&buff).Encode(pevent)
+	if errencode != nil {
+		return nil, errencode
+	}
+	log.Info("---", buff.String())
+	msg := api.Message{
+		Destination: "policyissued",
+		Payload:     buff.String(),
+		Version:     "v1",
+		Type:        "policy",
+	}
+	ack, perr := pclient.Publish(context.Background(), &msg)
+	if perr != nil {
+		return nil, perr
+	}
+	log.Info(ack.GetOk())
 	return &polid, nil
 }
 
