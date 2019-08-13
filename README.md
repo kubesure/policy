@@ -1,5 +1,7 @@
 # policy
 
+protoc --proto_path=..\api\v1\proto --go_out=plugins=grpc:vendor/github.com/kubesure/policy/api/v1 ..\api\v1\proto\publisher.proto
+
 ### Setup
 
    ```
