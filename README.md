@@ -3,6 +3,12 @@
 ### Setup
 
    ```
+      CREATE USER 'policy'@'localhost' IDENTIFIED BY 'policy123';
+      GRANT ALL PRIVILEGES ON policy. * TO 'policy'@'localhost';
+      REVOKE ALL PRIVILEGES ON * . * FROM 'policy'@'localhost';
+   ```
+
+   ```
       CREATE SCHEMA `policy`;
       USE policy;
       DROP TABLE policy;
@@ -20,7 +26,7 @@
 ```
  go run policy.go   
 ```
-curl -X POST http://172.17.0.13:8000/api/v1/health/poicies -H 'Content-Type: application/json' -d '{
+curl -X POST http://localhost:8000/api/v1/health/poicies -H 'Content-Type: application/json' -d '{
     "QuoteNumber": "12343456",        
     "ReceiptNumber": "1234345678"     
 } '
