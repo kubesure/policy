@@ -5,13 +5,7 @@ protoc --proto_path=..\api\v1\proto --go_out=plugins=grpc:vendor/github.com/kube
 ### Setup
 
    ```
-      CREATE USER 'policy'@'localhost' IDENTIFIED BY 'policy123';
-      GRANT ALL PRIVILEGES ON policy. * TO 'policy'@'localhost';
-      REVOKE ALL PRIVILEGES ON * . * FROM 'policy'@'localhost';
-   ```
-
-   ```
-      CREATE SCHEMA `policy`;
+      CREATE DATABASE `policy`;
       USE policy;
       DROP TABLE policy;
       CREATE TABLE `policy` (
