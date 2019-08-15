@@ -21,6 +21,9 @@ import (
 var mysqlsvc = os.Getenv("mysqlpolicysvc")
 var publishersvc = os.Getenv("publishersvc")
 var policyDBPass = os.Getenv("POLICY_DB_USR_PASS")
+var policyDBUser = os.Getenv("POLICY_DB_USR")
+
+
 
 func init() {
 	log.SetFormatter(&log.JSONFormatter{})
@@ -122,7 +125,7 @@ func createPolicy(w http.ResponseWriter, req *http.Request) {
 }
 
 func save(r *request) (*int64, error) {
-	db, _ := sql.Open("mysql", "policy:"+policyDBPass+"@tcp("+mysqlsvc+":3306)/policy")
+	db, _ := sql.Open("mysql", policyDBUser+":"+policyDBPass+"@tcp("+mysqlsvc+":3306)/policy")
 	defer db.Close()
 
 	err := db.Ping()

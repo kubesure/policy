@@ -22,7 +22,7 @@ pull:
 
 .PHONY: build # - Builds linux arch go binary
 build:
-	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 $(GOBUILD) -o $(BINARY_UNIX) -v ./...
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 $(GOBUILD) -o $(BINARY_UNIX) -v
 
 .PHONY: install  # - Installs go service
 install: build
