@@ -23,8 +23,6 @@ var publishersvc = os.Getenv("publishersvc")
 var policyDBPass = os.Getenv("POLICY_DB_USR_PASS")
 var policyDBUser = os.Getenv("POLICY_DB_USR")
 
-
-
 func init() {
 	log.SetFormatter(&log.JSONFormatter{})
 	log.SetLevel(log.DebugLevel)
@@ -124,6 +122,7 @@ func createPolicy(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
+//creates a policy record in mysql db.
 func save(r *request) (*int64, error) {
 	db, _ := sql.Open("mysql", policyDBUser+":"+policyDBPass+"@tcp("+mysqlsvc+":3306)/policy")
 	defer db.Close()
@@ -174,6 +173,7 @@ func save(r *request) (*int64, error) {
 	return &polid, nil
 }
 
+//Convert json to go primitive and validates request.
 func marshalPolicy(data string) (*request, *erroresponse) {
 	var r request
 	err := json.Unmarshal([]byte(data), &r)
