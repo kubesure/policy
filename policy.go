@@ -18,8 +18,8 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-var mysqlsvc = os.Getenv("mysqlpolicysvc")
-var publishersvc = os.Getenv("publishersvc")
+var mysqlsvc = os.Getenv("POLICY_DB_SVC")
+var publishersvc = os.Getenv("PUBLISHER_SVC")
 var policyDBPass = os.Getenv("POLICY_DB_USR_PASS")
 var policyDBUser = os.Getenv("POLICY_DB_USR")
 
@@ -124,6 +124,8 @@ func createPolicy(w http.ResponseWriter, req *http.Request) {
 
 //creates a policy record in mysql db.
 func save(r *request) (*int64, error) {
+	log.Debugf("  --- DB user %v DB pass %v mysqlsvc %v", policyDBUser, policyDBPass, mysqlsvc)
+
 	db, _ := sql.Open("mysql", policyDBUser+":"+policyDBPass+"@tcp("+mysqlsvc+":3306)/policy")
 	defer db.Close()
 
@@ -144,6 +146,8 @@ func save(r *request) (*int64, error) {
 	}
 
 	polid, _ := rs.LastInsertId()
+
+	log.Debugf("publisher svc...%s", publishersvc)
 
 	conn, err := grpc.Dial(publishersvc+":50051", grpc.WithInsecure())
 	if err != nil {
