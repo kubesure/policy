@@ -4,6 +4,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+//go:build go1.10
 // +build go1.10
 
 // Package idna implements IDNA2008 using the compatibility processing
@@ -15,7 +16,7 @@
 // UTS #46 is defined in https://www.unicode.org/reports/tr46.
 // See https://unicode.org/cldr/utility/idna.jsp for a visualization of the
 // differences between these two standards.
-package idna
+package idna // import "golang.org/x/net/idna"
 
 import (
 	"fmt"

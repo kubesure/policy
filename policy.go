@@ -14,7 +14,7 @@ import (
 	"google.golang.org/grpc"
 
 	_ "github.com/go-sql-driver/mysql"
-	api "github.com/kubesure/policy/api/v1"
+	api "github.com/kubesure/policy/publisher"
 	log "github.com/sirupsen/logrus"
 )
 

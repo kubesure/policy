@@ -13,6 +13,7 @@ import (
 	"crypto/tls"
 	"database/sql/driver"
 	"encoding/binary"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -108,7 +109,17 @@ func (mc *mysqlConn) writePacket(data []byte) error {
 		if mc.rawConn != nil {
 			conn = mc.rawConn
 		}
-		if err := connCheck(conn); err != nil {
+		var err error
+		// If this connection has a ReadTimeout which we've been setting on
+		// reads, reset it to its default value before we attempt a non-blocking
+		// read, otherwise the scheduler will just time us out before we can read
+		if mc.cfg.ReadTimeout != 0 {
+			err = conn.SetReadDeadline(time.Time{})
+		}
+		if err == nil && mc.cfg.CheckConnLiveness {
+			err = connCheck(conn)
+		}
+		if err != nil {
 			errLog.Print("closing bad idle connection: ", err)
 			mc.Close()
 			return driver.ErrBadConn
@@ -338,6 +349,12 @@ func (mc *mysqlConn) writeHandshakeResponsePacket(authResp []byte, plugin string
 		return errors.New("unknown collation")
 	}
 
+	// Filler [23 bytes] (all 0x00)
+	pos := 13
+	for ; pos < 13+23; pos++ {
+		data[pos] = 0
+	}
+
 	// SSL Connection Request Packet
 	// http://dev.mysql.com/doc/internals/en/connection-phase-packets.html#packet-Protocol::SSLRequest
 	if mc.cfg.tls != nil {
@@ -354,12 +371,6 @@ func (mc *mysqlConn) writeHandshakeResponsePacket(authResp []byte, plugin string
 		mc.rawConn = mc.netConn
 		mc.netConn = tlsConn
 		mc.buf.nc = tlsConn
-	}
-
-	// Filler [23 bytes] (all 0x00)
-	pos := 13
-	for ; pos < 13+23; pos++ {
-		data[pos] = 0
 	}
 
 	// User [null terminated string]
@@ -767,7 +778,7 @@ func (rows *textRows) readRow(dest []driver.Value) error {
 					case fieldTypeTimestamp, fieldTypeDateTime,
 						fieldTypeDate, fieldTypeNewDate:
 						dest[i], err = parseDateTime(
-							string(dest[i].([]byte)),
+							dest[i].([]byte),
 							mc.cfg.Loc,
 						)
 						if err == nil {
@@ -993,11 +1004,30 @@ func (stmt *mysqlStmt) writeExecutePacket(args []driver.Value) error {
 				continue
 			}
 
+			if v, ok := arg.(json.RawMessage); ok {
+				arg = []byte(v)
+			}
 			// cache types and values
 			switch v := arg.(type) {
 			case int64:
 				paramTypes[i+i] = byte(fieldTypeLongLong)
 				paramTypes[i+i+1] = 0x00
+
+				if cap(paramValues)-len(paramValues)-8 >= 0 {
+					paramValues = paramValues[:len(paramValues)+8]
+					binary.LittleEndian.PutUint64(
+						paramValues[len(paramValues)-8:],
+						uint64(v),
+					)
+				} else {
+					paramValues = append(paramValues,
+						uint64ToBytes(uint64(v))...,
+					)
+				}
+
+			case uint64:
+				paramTypes[i+i] = byte(fieldTypeLongLong)
+				paramTypes[i+i+1] = 0x80 // type is unsigned
 
 				if cap(paramValues)-len(paramValues)-8 >= 0 {
 					paramValues = paramValues[:len(paramValues)+8]
@@ -1086,7 +1116,10 @@ func (stmt *mysqlStmt) writeExecutePacket(args []driver.Value) error {
 				if v.IsZero() {
 					b = append(b, "0000-00-00"...)
 				} else {
-					b = v.In(mc.cfg.Loc).AppendFormat(b, timeFormat)
+					b, err = appendDateTime(b, v.In(mc.cfg.Loc))
+					if err != nil {
+						return err
+					}
 				}
 
 				paramValues = appendLengthEncodedInteger(paramValues,
